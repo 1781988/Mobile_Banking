@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mobile Banking 数字银行核心业务与运营平台">
+    <title>Mobile Banking · 数字银行核心业务平台</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+<div class="background-grid" aria-hidden="true"></div>
+
+<header class="topbar">
+    <a class="brand" href="/" aria-label="Mobile Banking 首页">
+        <span class="brand-mark">MB</span>
+        <span>
+            <strong>Mobile Banking</strong>
+            <small>Digital Core Sandbox</small>
+        </span>
+    </a>
+    <div id="sessionActions" class="session-actions hidden">
+        <span id="currentUser" class="current-user"></span>
+        <button id="logoutBtn" class="button button-ghost" type="button">安全退出</button>
+    </div>
+</header>
+
+<main>
+    <section id="loginView" class="login-layout">
+        <div class="hero-copy">
+            <span class="eyebrow">DIGITAL BANKING PLATFORM</span>
+            <h1>连接账户、交易、风控与运营的<br>数字银行业务平台。</h1>
+            <p>以账户、转账、双边账本、幂等控制、交易限额、审计与对账为主线，提供可部署、可测试、可观测的业务能力。</p>
+            <div class="feature-pills" aria-label="核心能力">
+                <span>数据库事务</span>
+                <span>双边账本</span>
+                <span>幂等订单</span>
+                <span>风控限额</span>
+                <span>日终对账</span>
+            </div>
+        </div>
+
+        <form id="loginForm" class="panel login-panel">
+            <div class="panel-heading">
+                <span class="status-dot"></span>
+                <span>系统登录</span>
+            </div>
+            <label>
+                <span>用户名</span>
+                <input id="username" name="username" autocomplete="username" maxlength="64" value="alice" required>
+            </label>
+            <label>
+                <span>密码</span>
+                <input id="password" name="password" type="password" autocomplete="current-password" maxlength="128" value="Bank@12345" required>
+            </label>
+            <button class="button button-primary button-full" type="submit">进入数字银行</button>
+            <p id="loginError" class="form-error" role="alert"></p>
+            <div class="demo-credentials">
+                <strong>本地演示账户</strong>
+                <span>客户：alice / Bank@12345</span>
+                <span>客户：bob / Bank@12345</span>
+                <span>运营：admin / Admin@12345</span>
+            </div>
+        </form>
+    </section>
+
+    <section id="appView" class="app-view hidden">
+        <div class="page-heading">
+            <div>
+                <span class="eyebrow">REAL-TIME BANKING OVERVIEW</span>
+                <h1 id="welcomeTitle">账户总览</h1>
+                <p>所有金额变更均由服务端事务执行，页面不保存账户余额。</p>
+            </div>
+            <div class="system-badge"><span></span> Service Online</div>
+        </div>
+
+        <section id="customerDashboard">
+            <div class="metric-grid">
+                <article class="metric-card">
+                    <span>账户数量</span>
+                    <strong id="accountCount">0</strong>
+                    <small>当前登录用户</small>
+                </article>
+                <article class="metric-card">
+                    <span>可用总余额</span>
+                    <strong id="totalBalance">¥0.00</strong>
+                    <small>仅统计 CNY 活跃账户</small>
+                </article>
+                <article class="metric-card">
+                    <span>近期交易</span>
+                    <strong id="transferCount">0</strong>
+                    <small>最近一页交易订单</small>
+                </article>
+                <article class="metric-card accent">
+                    <span>安全控制</span>
+                    <strong>ACTIVE</strong>
+                    <small>幂等校验与双边记账</small>
+                </article>
+            </div>
+
+            <div class="two-column">
+                <section class="panel">
+                    <div class="panel-heading panel-heading-between">
+                        <span>我的账户</span>
+                        <button id="refreshAccountsBtn" class="text-button" type="button">刷新</button>
+                    </div>
+                    <div id="accountCards" class="account-list"></div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-heading">行内转账</div>
+                    <form id="transferForm" class="transfer-form">
+                        <label>
+                            <span>付款账户</span>
+                            <select id="payerAccount" required></select>
+                        </label>
+                        <label>
+                            <span>收款账号</span>
+                            <input id="payeeAccount" inputmode="numeric" pattern="\d{10,32}" maxlength="32"
+                                   placeholder="例如 6222026000000002" required>
+                        </label>
+                        <div class="field-row">
+                            <label>
+                                <span>转账金额（CNY）</span>
+                                <input id="transferAmount" type="number" min="0.01" step="0.01" placeholder="0.00" required>
+                            </label>
+                            <label>
+                                <span>附言</span>
+                                <input id="transferRemark" maxlength="140" placeholder="选填">
+                            </label>
+                        </div>
+                        <div class="notice-box">
+                            单笔限额 ¥50,000；日累计限额 ¥100,000。重复提交会由 Idempotency-Key 返回原订单，不会重复扣款。
+                        </div>
+                        <button class="button button-primary button-full" type="submit">确认转账</button>
+                        <p id="transferMessage" class="form-message" role="status"></p>
+                    </form>
+                </section>
+            </div>
+
+            <div class="two-column lower-grid">
+                <section class="panel">
+                    <div class="panel-heading panel-heading-between">
+                        <span>最近交易</span>
+                        <button id="refreshTransfersBtn" class="text-button" type="button">刷新</button>
+                    </div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>订单号</th><th>方向</th><th>金额</th><th>状态</th><th>时间</th></tr></thead>
+                            <tbody id="transferTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-heading panel-heading-between">
+                        <span>账户流水</span>
+                        <select id="statementAccount" class="compact-select"></select>
+                    </div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>方向</th><th>金额</th><th>余额</th><th>对方账户</th><th>时间</th></tr></thead>
+                            <tbody id="statementTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </section>
+
+        <section id="adminDashboard" class="hidden">
+            <div class="admin-toolbar panel">
+                <div>
+                    <div class="panel-heading">运营管理工作台</div>
+                    <p>用于账户管控、风险复核、审计追踪和日终账务核对。</p>
+                </div>
+                <button id="runReconciliationBtn" class="button button-primary" type="button">立即执行对账</button>
+            </div>
+
+            <div class="two-column admin-grid">
+                <section class="panel">
+                    <div class="panel-heading panel-heading-between">
+                        <span>账户状态管理</span>
+                        <button id="refreshAdminBtn" class="text-button" type="button">刷新全部</button>
+                    </div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>账号</th><th>客户</th><th>余额</th><th>状态</th><th>操作</th></tr></thead>
+                            <tbody id="adminAccountTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="panel">
+                    <div class="panel-heading">最新对账结果</div>
+                    <div id="reconciliationSummary" class="empty-state">尚未执行对账</div>
+                </section>
+            </div>
+
+            <div class="two-column lower-grid">
+                <section class="panel">
+                    <div class="panel-heading">风控事件</div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>级别</th><th>类型</th><th>金额</th><th>原因</th><th>时间</th></tr></thead>
+                            <tbody id="riskTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+                <section class="panel">
+                    <div class="panel-heading">审计日志</div>
+                    <div class="table-scroll">
+                        <table>
+                            <thead><tr><th>动作</th><th>结果</th><th>资源</th><th>请求 ID</th><th>时间</th></tr></thead>
+                            <tbody id="auditTable"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </section>
+    </section>
+</main>
+
+<div id="toast" class="toast hidden" role="status"></div>
+<script src="/js/app.js" defer></script>
+</body>
+</html>

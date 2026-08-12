@@ -1,0 +1,104 @@
+server:
+  port: ${SERVER_PORT:8080}
+  shutdown: graceful
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:none}
+  compression:
+    enabled: true
+
+spring:
+  application:
+    name: mobile-banking
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/mobile_banking?useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai}
+    username: ${SPRING_DATASOURCE_USERNAME:bank_app}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    hikari:
+      pool-name: mobile-banking-pool
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      connection-timeout: 30000
+      validation-timeout: 5000
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+        default_batch_fetch_size: 50
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+  data:
+    redis:
+      repositories:
+        enabled: false
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+      timeout: 2s
+  jackson:
+    default-property-inclusion: non_null
+    time-zone: UTC
+
+bank:
+  demo-enabled: ${BANK_DEMO_ENABLED:false}
+  security:
+    token-ttl: ${BANK_SECURITY_TOKEN_TTL:PT8H}
+    login-max-failures: ${BANK_SECURITY_LOGIN_MAX_FAILURES:5}
+    login-window: ${BANK_SECURITY_LOGIN_WINDOW:PT10M}
+    redis-rate-limit-enabled: ${BANK_SECURITY_REDIS_RATE_LIMIT_ENABLED:false}
+  transfer:
+    single-limit: ${BANK_TRANSFER_SINGLE_LIMIT:50000.00}
+    daily-limit: ${BANK_TRANSFER_DAILY_LIMIT:100000.00}
+    zone-id: ${BANK_TRANSFER_ZONE_ID:Asia/Shanghai}
+    idempotency-key-min-length: 8
+    idempotency-key-max-length: 64
+    processing-timeout: ${BANK_TRANSFER_PROCESSING_TIMEOUT:PT5M}
+    recovery-interval: ${BANK_TRANSFER_RECOVERY_INTERVAL:PT1M}
+  reconciliation:
+    cron: ${BANK_RECONCILIATION_CRON:0 0 2 * * *}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+      probes:
+        enabled: true
+  health:
+    redis:
+      enabled: ${MANAGEMENT_HEALTH_REDIS_ENABLED:false}
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: Mobile Banking
+    description: Mobile banking core business and operations platform
+    version: 1.0.0
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+
+logging:
+  level:
+    root: INFO
+    com.mobilebanking.platform: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [%X{requestId:-}] %logger{36} - %msg%n"
